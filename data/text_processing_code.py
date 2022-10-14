@@ -27,10 +27,6 @@ from nltk import ne_chunk
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 
-from nltk.probability import FreqDist
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-
 ###### PLEASE SET YOUR OWN LOCAL PATH ######
 local_path = ".../train-balanced-sarcasm.csv" 
 
