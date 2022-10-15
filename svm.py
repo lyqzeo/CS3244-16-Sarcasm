@@ -16,7 +16,7 @@ def svm(csv):
     # all columns except "labels" column
     X = df.loc[:, df.columns != "label"]
 
-    # (true labels) labels: 1 = sacarstic, 0 = not sacarstic
+    # (true labels) labels: 1 = sarcastic, 0 = not sarcastic
     y = df["label"].to_numpy()
 
     # split the dataset into training and test datasets
