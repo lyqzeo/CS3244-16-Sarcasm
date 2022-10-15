@@ -20,9 +20,10 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
 
-def preprocess(input_path, category, output_file):
+def preprocess(input_path, output_file):
     ## Reading CSV
     df = pd.read_csv(input_path)   
+    
 
     ## Removing Empty Rows
     # print(sum(df["comment"].isnull()))   # Before
@@ -45,9 +46,17 @@ def preprocess(input_path, category, output_file):
     ## Checking for data imbalance
     # df['label'].value_counts()
 
+    preprocess_cat(df, "comment")
+    preprocess_cat(df, "parent_comment")
+
+    # cleaned_comments and cleaned_parent_comment not in df
+    df.to_csv(output_file, index=False)
+
+def preprocess_cat(df, category):
     # lowercase all comments
     df[category] = df[category].str.lower()
 
+    # remove urls
     pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
     df[category] = np.vectorize(pattern.sub)('', df[category])
 
@@ -82,23 +91,18 @@ def preprocess(input_path, category, output_file):
         words = ' '.join(words)
         text = words
 
-    # cleaned_comments and cleaned_parent_comment not in df
-    df.to_csv(output_file, index=False)
-
 def main(args):
     assert args.input and args.output, "Please specify --input and --output"
-    assert args.cat, "Please specify 'comment' OR 'parent_comment'" 
-    preprocess(args.input, args.cat, args.output)
+    preprocess(args.input, args.output)
 
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', help='file to be pre-processed')
-    parser.add_argument('--cat', help='cat to be pre-processed')
     parser.add_argument('--output', help='pre-processed file')
     return parser.parse_args()
 
 # example:
-# python text_processing_code.py --input train-subset.csv --cat comment --output cleaned_comments.csv
+# python text_processing_code.py --input train-subset.csv --output cleaned_comments.csv
 if __name__ == "__main__":
     args = get_arguments()
     main(args)
