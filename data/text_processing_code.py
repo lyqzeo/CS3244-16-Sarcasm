@@ -1,5 +1,6 @@
 import argparse
 import re
+from vaderSentiment import SentimentIntensityAnalyzer
 
 import contractions
 import pandas as pd
