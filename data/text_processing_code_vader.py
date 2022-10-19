@@ -1,7 +1,5 @@
 import argparse
 import re
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
 
 import contractions
 import pandas as pd
@@ -22,33 +20,11 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
 
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 def preprocess(input_path, output_file):
     ## Reading CSV
     df = pd.read_csv(input_path)
-
-    analyzer = SentimentIntensityAnalyzer()
-    sentiments_comment = []
-    for sentence in df['comment']:
-        vs = analyzer.polarity_scores(sentence)
-        #print("{:-<65} {}".format(sentence, str(vs)))
-        sentiments_comment += [str(vs)]
-    sentiments_comment = np.reshape(np.array([sentiments_comment]),(-1,1))
-
-    sentiments_pcomment = []
-    for sentence in df['parent_comment']:
-        vs = analyzer.polarity_scores(sentence)
-        #print("{:-<65} {}".format(sentence, str(vs)))
-        sentiments_pcomment += [str(vs)]
-    sentiments_pcomment = np.reshape(np.array([sentiments_pcomment]),(-1,1))
-    
-
-    ## Removing Empty Rows
-    # print(sum(df["comment"].isnull()))   # Before
-    nan_value = float("NaN") # Convert NaN values to empty string
-    df.replace("", nan_value, inplace=True)
-    df.dropna(subset=["comment"], inplace=True)
-    # print(sum(df["comment"].isnull()))  # After
 
     ## Checking for duplicates
     df = df.drop_duplicates(subset=['comment','parent_comment'])
@@ -66,6 +42,27 @@ def preprocess(input_path, output_file):
 
     preprocess_cat(df, "comment")
     preprocess_cat(df, "parent_comment")
+
+    ## Removing Empty Rows
+    nan_value = float("NaN") # Convert NaN values to empty string
+    df.replace("", nan_value, inplace=True)
+    df.dropna(subset=["comment"], inplace=True)
+
+    analyzer = SentimentIntensityAnalyzer()
+    sentiments_comment = []
+    for sentence in df['comment']:
+        sentence = str(sentence)
+        vs = analyzer.polarity_scores(sentence)
+        sentiments_comment += [str(vs)]
+    sentiments_comment = np.reshape(np.array([sentiments_comment]),(-1,1))
+
+    sentiments_pcomment = []
+    for sentence in df['parent_comment']:
+        sentence = str(sentence)
+        vs = analyzer.polarity_scores(sentence)
+        sentiments_pcomment += [str(vs)]
+    sentiments_pcomment = np.reshape(np.array([sentiments_pcomment]),(-1,1))
+
     df['vader_comment'] = sentiments_comment
     df['vader_pcomment'] = sentiments_pcomment
     # cleaned_comments and cleaned_parent_comment not in df
@@ -95,20 +92,20 @@ def preprocess_cat(df, category):
     # remove [,.\"!@#$%^&*(){}?/;`~:<>+=-] from the comments
     df[category] = np.vectorize(re.sub)(r"[,.\"!@#$%^&*(){}?/;`~:<>+=-]", "", df[category])
 
-    for index, text in df[category].iteritems():
-        # split a sentence into words 
+    stop_words = set(stopwords.words("english"))
+    stop_words.discard("not")
+
+    for i in df[category].index:
+        text = df.at[i, "comment"]
+
         tokens = word_tokenize(text)
         table = str.maketrans('', '', string.punctuation)
         stripped = [w.translate(table) for w in tokens] # stemming
         words = [word for word in stripped if word.isalpha()]
 
-        # remove stopwords ("not is not removed")
-        stop_words = set(stopwords.words("english"))
-        stop_words.discard("not")
-
         words = [w for w in words if not w in stop_words]
         words = ' '.join(words)
-        text = words
+        df.at[i, "comment"] = words
 
 def main(args):
     assert args.input and args.output, "Please specify --input and --output"
@@ -121,7 +118,7 @@ def get_arguments():
     return parser.parse_args()
 
 # example:
-# python text_processing_code.py --input train-subset.csv --output cleaned_comments.csv
+# python text_processing_code_vader.py --input train-subset.csv --output cleaned_comments.csv
 if __name__ == "__main__":
     args = get_arguments()
     main(args)
