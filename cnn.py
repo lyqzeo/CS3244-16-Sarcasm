@@ -28,7 +28,10 @@ def extractVaderList(str):
 
 def cnn(csv):
     df = pd.read_csv(csv)
-    df["comment_embbed"] = df.apply(lambda row: sentenceVec(row.comment), axis=1)
+    comments_embed = df.apply(lambda row: sentenceVec(row.comment), axis=1)
+    comments_vader = df.apply(lambda row: extractVaderList(row.vader_comment), axis=1)
+    X = pd.concat(comments_embed, comments_vader, axis=1)
+    print(X.head())
     #TODO: See about adding sentence embbed for parent and post
     
 
