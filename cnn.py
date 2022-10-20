@@ -7,7 +7,8 @@ import argparse
 
 import numpy as np
 import pandas as pd
-import gensim
+import gensim.downloader
+import json
 
 
 # Code inspired by: https://towardsdatascience.com/super-easy-way-to-get-sentence-embedding-using-fasttext-in-python-a70f34ac5b7c
@@ -17,8 +18,13 @@ def sentenceVec(sentence):
     acc = np.zeros(300)
     for word in sentence.split():
         i+=1
-        acc += wordEmbeddingsModel.wv[word] 
+        if word in wordEmbeddingsModel: #NOTE: Hack to work around out of vocab feature not working
+            #NOTE: Fasttext *should* work with out of vocab words, but this model doesn't automatically
+            acc += wordEmbeddingsModel[word] #TODO: Make this work with out of vocab
     return acc/i #TODO: Test this
+
+def extractVaderList(str):
+    return list(json.load(str)[k] for k in ('neg', 'neu', 'pos', 'compound'))
 
 def cnn(csv):
     df = pd.read_csv(csv)
