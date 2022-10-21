@@ -20,5 +20,3 @@ report = classification_report(logit.predict(x_test), y_test, output_dict=True)
 report = pd.DataFrame(report).transpose()
 report = report.rename({"0": "Sarcastic Comments", "1": "Non Sarcastic Comments"})
 print(report)
-
-
