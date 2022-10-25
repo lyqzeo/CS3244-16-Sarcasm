@@ -10,6 +10,9 @@ import pandas as pd
 import gensim.downloader
 import json
 
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+
 
 # Code inspired by: https://towardsdatascience.com/super-easy-way-to-get-sentence-embedding-using-fasttext-in-python-a70f34ac5b7c
 wordEmbeddingsModel = gensim.downloader.load('fasttext-wiki-news-subwords-300')
@@ -37,11 +40,17 @@ def cnn(csv):
       ).rename(columns={0:'neg', 1:'neu', 2:'pos', 3:'compound'})
     comments_embed = df.apply(lambda row: sentenceVec(row.comment), axis=1, result_type='expand')
     #TODO: See about adding sentence embbed and vader for parent and post
-    X = pd.concat([comments_embed, comments_vader], axis=1) #TODO: Fix bug here "TypeError: concat() got multiple values for argument 'axis'"
-    Y = df["label"]
-    
+    X = pd.concat([comments_embed, comments_vader], axis=1).to_numpy()
+    y = df["label"].to_numpy()
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    #TODO: Finish this
+    #TODO: experiment with hyperparameters
+    clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
+                        hidden_layer_sizes=(30, 5), random_state=1)
+    clf = clf.fit(X_train, y_train)
+
+    print("training set score: %f" % clf.score(X_train, y_train))
+    print("test set score: %f" % clf.score(X_test, y_test))
 
 def main(args):
     assert args.csv, "Please specify --csv"
