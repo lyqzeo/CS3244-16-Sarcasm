@@ -24,15 +24,21 @@ def sentenceVec(sentence):
     return acc/i #TODO: Test this
 
 def extractVaderList(str):
-    return list(json.load(str)[k] for k in ('neg', 'neu', 'pos', 'compound'))
+    well_formatted_str = str.replace("'",'"')
+    vader_dict = json.loads(well_formatted_str)
+    return list(vader_dict[k] for k in ('neg', 'neu', 'pos', 'compound'))
 
 def cnn(csv):
     df = pd.read_csv(csv)
-    comments_embed = df.apply(lambda row: sentenceVec(row.comment), axis=1)
-    comments_vader = df.apply(lambda row: extractVaderList(row.vader_comment), axis=1)
-    X = pd.concat(comments_embed, comments_vader, axis=1)
-    print(X.head())
-    #TODO: See about adding sentence embbed for parent and post
+    comments_vader = df.apply(
+        lambda row: extractVaderList(row.vader_comment), 
+        axis=1, 
+        result_type='expand'
+      ).rename(columns={0:'neg', 1:'neu', 2:'pos', 3:'compound'})
+    comments_embed = df.apply(lambda row: sentenceVec(row.comment), axis=1, result_type='expand')
+    #TODO: See about adding sentence embbed and vader for parent and post
+    X = pd.concat([comments_embed, comments_vader], axis=1) #TODO: Fix bug here "TypeError: concat() got multiple values for argument 'axis'"
+    Y = df["label"]
     
 
     #TODO: Finish this
