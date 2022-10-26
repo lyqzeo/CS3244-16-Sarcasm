@@ -5,12 +5,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score, classification_report
 
 train_df = pd.read_csv('data/cleaned_comments.csv')
-
+X = train_df.loc[:, train_df.columns != "label"]
 logit = LogisticRegression(solver="saga", penalty="elasticnet", l1_ratio=0.11)
 
-vectorizer = TfidfVectorizer(use_idf=True, min_df=2, ngram_range=(1,1))
-X_tf_idf= vectorizer.fit_transform(train_df['comment'])
-x_train, x_test, y_train, y_test = train_test_split(X_tf_idf, train_df['label'], random_state=42)
+vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1,1))
+x= vectorizer.fit_transform(train_df[['comment', 'parent_comment']])
+x_train, x_test, y_train, y_test = train_test_split(x, train_df['label'], random_state=42)
 
 logit.fit(x_train, y_train)
 print(accuracy_score(y_test, logit.predict(x_test)))
