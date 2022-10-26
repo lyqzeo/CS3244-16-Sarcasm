@@ -68,7 +68,7 @@ def preprocess_cat(df, category):
 
     # remove urls
     pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-    df[category] = np.vectorize(pattern.sub)('', df[category])
+    df[category] = df[category].transform(lambda x: pattern.sub('', x))
 
     emoji = re.compile("["
                 u"\U0001F600-\U0001FFFF"  # emoticons
@@ -78,13 +78,13 @@ def preprocess_cat(df, category):
                 u"\U00002702-\U000027B0"
                 u"\U000024C2-\U0001F251"
                 "]+", flags=re.UNICODE)
-    df[category] = np.vectorize(emoji.sub)(r'', df[category])
+    df[category] = df[category].transform(lambda x: emoji.sub(r'', x))
 
     # expand contractions ie. he's => he is
-    df[category] = np.vectorize(contractions.fix)(df[category])
+    df[category] = df[category].transform(contractions.fix)
 
     # remove [,.\"!@#$%^&*(){}?/;`~:<>+=-] from the comments
-    df[category] = np.vectorize(re.sub)(r"[,.\"!@#$%^&*(){}?/;`~:<>+=-]", "", df[category])
+    df[category] = df[category].transform(lambda x: re.sub(r"[,.\"!@#$%^&*(){}?/;`~:<>+=-]", "", x))
 
     stop_words = set(stopwords.words("english"))
     stop_words.discard("not")
