@@ -20,7 +20,7 @@ def sentenceVec(sentence):
     i = 0
     acc = np.zeros(300)
     if type(sentence) is float: #Handle edge cases where sentence is nan (Not a Number), due to weird empty string logic
-        sentence = ""
+        return acc #Return 0 vector as edge case
     for word in sentence.split():
         i+=1
         if word in wordEmbeddingsModel: #NOTE: Hack to work around out of vocab feature not working
