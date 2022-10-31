@@ -2,6 +2,7 @@
 # Note: Might change from cnn to regular nn for ease of implementation
 #       But might use cnn anyway for potentially powerful model
 
+import os
 
 import argparse
 
@@ -15,7 +16,11 @@ from sklearn.neural_network import MLPClassifier
 
 
 # Code inspired by: https://towardsdatascience.com/super-easy-way-to-get-sentence-embedding-using-fasttext-in-python-a70f34ac5b7c
-wordEmbeddingsModel = gensim.downloader.load('fasttext-wiki-news-subwords-300')
+wordEmbeddingsModel = None
+def loadWordEmbeddingsModel(): # Defer Expensive load
+    global wordEmbeddingsModel
+    wordEmbeddingsModel = gensim.downloader.load('fasttext-wiki-news-subwords-300')
+
 def sentenceVec(sentence):
     i = 0
     acc = np.zeros(300)
@@ -33,7 +38,16 @@ def extractVaderList(str):
     vader_dict = json.loads(well_formatted_str)
     return list(vader_dict[k] for k in ('neg', 'neu', 'pos', 'compound'))
 
-def cnn(csv):
+def get_X_y(csv):
+    if os.path.isfile("./data/cnn_cache.npz"):
+        print("Reading from cached X,y")
+        arr = np.load("data/cnn_cache.npz")
+        return arr["X"], arr["y"]
+    
+    print("No cached X,y found, computing from source")
+
+    loadWordEmbeddingsModel()
+
     df = pd.read_csv(csv)
     comments_vader = df.apply(
         lambda row: extractVaderList(row.vader_comment), 
@@ -44,7 +58,12 @@ def cnn(csv):
     #TODO: See about adding sentence embbed and vader for parent and post
     X = pd.concat([comments_embed, comments_vader], axis=1).to_numpy()
     y = df["label"].to_numpy()
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    np.savez("data/cnn_cache", X=X, y=y)
+    return X,y
+
+def cnn(csv):
+    X,y = get_X_y(csv)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     #TODO: experiment with hyperparameters
     clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
@@ -63,7 +82,7 @@ def get_arguments():
     parser.add_argument('--csv', help='path to the dataset file')
     return parser.parse_args()
 
-# Usage: python cnn.py --csv data/cleaned_comments.csv
+# Usage: python cnn.py --csv data/cleaned_comments_full.csv
 if __name__ == "__main__":
     args = get_arguments()
     main(args)
