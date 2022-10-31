@@ -2,7 +2,7 @@
 # Note: Might change from cnn to regular nn for ease of implementation
 #       But might use cnn anyway for potentially powerful model
 
-import os
+import os, time
 
 import argparse
 
@@ -63,11 +63,13 @@ def get_X_y(csv):
 
 def cnn(csv):
     X,y = get_X_y(csv)
+    print("Loading complete, setting up...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     #TODO: experiment with hyperparameters
     clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
                         hidden_layer_sizes=(30, 5), random_state=1)
+    print("Begin training...")
     clf = clf.fit(X_train, y_train)
 
     print("training set score: %f" % clf.score(X_train, y_train))
@@ -84,5 +86,7 @@ def get_arguments():
 
 # Usage: python cnn.py --csv data/cleaned_comments_full.csv
 if __name__ == "__main__":
+    start_time = time.time()
     args = get_arguments()
     main(args)
+    print("--- %s seconds ---" % (time.time() - start_time))
