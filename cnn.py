@@ -46,7 +46,9 @@ def get_X_y(csv):
     
     print("No cached X,y found, computing from source")
 
+    print("Loading Word Embedding Model")
     loadWordEmbeddingsModel()
+    print("Finished Loading Model")
 
     df = pd.read_csv(csv)
     comments_vader = df.apply(
@@ -63,12 +65,13 @@ def get_X_y(csv):
 
 def cnn(csv):
     X,y = get_X_y(csv)
+    print("Data shape: ", X.shape, y.shape)
     print("Loading complete, setting up...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     #TODO: experiment with hyperparameters
-    clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
-                        hidden_layer_sizes=(30, 5), random_state=1)
+    clf = MLPClassifier(solver='adam', alpha=1e-5,
+                        hidden_layer_sizes=(30, 5), random_state=1, verbose=True)
     print("Begin training...")
     clf = clf.fit(X_train, y_train)
 
