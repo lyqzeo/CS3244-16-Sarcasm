@@ -46,35 +46,58 @@ def get_X_y(csv):
     
     print("No cached X,y found, computing from source")
 
-    print("Loading Word Embedding Model")
-    loadWordEmbeddingsModel()
-    print("Finished Loading Model")
+    ### CONFIG ###
+    X_input_to_include = []
+    X_input_to_include.append("comments_vader")
+    X_input_to_include.append("comments_embed")
+    X_input_to_include.append("p_comments_vader")
+    X_input_to_include.append("p_comments_embed")
+    print("Logging data config:", X_input_to_include)
+
+    X_input = []
+
+    if ("comments_embed" in X_input_to_include) or ("p_comments_embed" in X_input_to_include):
+        print("Loading Word Embedding Model")
+        loadWordEmbeddingsModel()
+        print("Finished Loading Model")
+    else:
+        print("Skip loading Word Embedding Model")
 
     df = pd.read_csv(csv)
-    comments_vader = df.apply(
-        lambda row: extractVaderList(row.vader_comment), 
-        axis=1, 
-        result_type='expand'
-      ).rename(columns={0:'neg', 1:'neu', 2:'pos', 3:'compound'})
-    comments_embed = df.apply(
-        lambda row: sentenceVec(row.comment), axis=1, result_type='expand'
-        ).rename(lambda x : str(x), axis='columns')
-    add_parent_data = True
-    X_input = [comments_embed, comments_vader]
-    if add_parent_data:
-        p_comments_vader = df.apply(
+
+    if "comments_vader" in X_input_to_include:
+        comments_vader = df.apply(
             lambda row: extractVaderList(row.vader_comment), 
             axis=1, 
             result_type='expand'
-        ).rename(columns={0:'p_neg', 1:'p_neu', 2:'p_pos', 3:'p_compound'})
-        p_comments_embed = df.apply(
+        ).rename(columns={0:'neg', 1:'neu', 2:'pos', 3:'compound'})
+        X_input.append(comments_vader)
+
+    if "comments_embed" in X_input_to_include:
+        comments_embed = df.apply(
             lambda row: sentenceVec(row.comment), axis=1, result_type='expand'
-            ).rename(lambda x : "p_"+str(x), axis='columns')
+            ).rename(lambda x : str(x), axis='columns')
+        X_input.append(comments_embed)
+    
+    if "p_comments_vader" in X_input_to_include:
+        p_comments_vader = df.apply(
+            lambda row: extractVaderList(row.vader_pcomment), 
+            axis=1, 
+            result_type='expand'
+        ).rename(columns={0:'p_neg', 1:'p_neu', 2:'p_pos', 3:'p_compound'})
         X_input.append(p_comments_vader)
+    
+    if "p_comments_embed" in X_input_to_include:
+        p_comments_embed = df.apply(
+            lambda row: sentenceVec(row.parent_comment), axis=1, result_type='expand'
+            ).rename(lambda x : "p_"+str(x), axis='columns')
         X_input.append(p_comments_embed)
+    
     X = pd.concat(X_input, axis=1).to_numpy()
     y = df["label"].to_numpy()
+
     np.savez("data/cnn_cache", X=X, y=y)
+    
     return X,y
 
 def cnn(csv):
