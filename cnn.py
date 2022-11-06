@@ -56,16 +56,30 @@ def get_X_y(csv):
         axis=1, 
         result_type='expand'
       ).rename(columns={0:'neg', 1:'neu', 2:'pos', 3:'compound'})
-    comments_embed = df.apply(lambda row: sentenceVec(row.comment), axis=1, result_type='expand')
-    #TODO: See about adding sentence embbed and vader for parent and post
-    X = pd.concat([comments_embed, comments_vader], axis=1).to_numpy()
+    comments_embed = df.apply(
+        lambda row: sentenceVec(row.comment), axis=1, result_type='expand'
+        ).rename(lambda x : str(x), axis='columns')
+    add_parent_data = True
+    X_input = [comments_embed, comments_vader]
+    if add_parent_data:
+        p_comments_vader = df.apply(
+            lambda row: extractVaderList(row.vader_comment), 
+            axis=1, 
+            result_type='expand'
+        ).rename(columns={0:'p_neg', 1:'p_neu', 2:'p_pos', 3:'p_compound'})
+        p_comments_embed = df.apply(
+            lambda row: sentenceVec(row.comment), axis=1, result_type='expand'
+            ).rename(lambda x : "p_"+str(x), axis='columns')
+        X_input.append(p_comments_vader)
+        X_input.append(p_comments_embed)
+    X = pd.concat(X_input, axis=1).to_numpy()
     y = df["label"].to_numpy()
     np.savez("data/cnn_cache", X=X, y=y)
     return X,y
 
 def cnn(csv):
     X,y = get_X_y(csv)
-    print("Data shape: ", X.shape, y.shape)
+    print("Data shape: ", X.shape,)
     print("Loading complete, setting up...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
