@@ -86,6 +86,12 @@ def cnn(csv):
     #TODO: experiment with hyperparameters
     clf = MLPClassifier(solver='adam', alpha=1e-5,
                         hidden_layer_sizes=(30, 5), random_state=1, verbose=True)
+    print("Logging hyper-parameters")
+    print("Solver:", clf.__dict__["solver"])
+    print("Alpha:", clf.__dict__["alpha"])
+    print("Hidden layer sizes", clf.__dict__["hidden_layer_sizes"])
+    print("")
+
     print("Begin training...")
     clf = clf.fit(X_train, y_train)
 
