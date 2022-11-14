@@ -29,7 +29,7 @@ def run_model(model, X_train, y_train, X_test, y_test, verbose=True):
     
     return model, accuracy, roc_auc, time_taken
 
-df = pd.read_csv('data/cleaned_comments_full.csv')
+df = pd.read_csv('data/cleaned_comments.csv')
 X = df.loc[:, df.columns != "label"]
 x_train, x_test, y_train, y_test = train_test_split(X, df['label'], random_state=42)
 
@@ -65,7 +65,8 @@ def logit_tfidf(csv):
     x_test = vectorizer.transform(x_test['comment'])
     model_lr, accuracy_lr, roc_auc_lr, tt_lr = run_model(model_lr, x_train, y_train, x_test, y_test)
     return model_lr, accuracy_lr, roc_auc_lr, tt_lr
-    
+
+logit_tfidf("data/cleaned_comments.csv")
 # Scalar features logit
 ### Normalize Features
 from sklearn.preprocessing import StandardScaler
