@@ -9,7 +9,6 @@ from matplotlib import pyplot as plt
 
 # Set up own cleaned_data_full
 
-
 def run_model(model, X_train, y_train, X_test, y_test, verbose=True):
     t0=time.time()
     if verbose == False:
@@ -38,6 +37,7 @@ import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 stop_words = stopwords.words("english")
+stop_words.append("would")
 def removeStopWords(text):
     # Remove stop words
     tokens = []
@@ -59,14 +59,16 @@ def logit_tfidf(csv):
     model_lr = LogisticRegression(**params_lr)
     
     # Tf-idf (fit on x_train)
-    vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1,2), min_df=0.01, max_df=0.9)
-    vectorizer.fit(x_train)
+    vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1,3), min_df=0.01, max_df=0.9)
+    vectorizer.fit(x_train['comment'])
     x_train = vectorizer.transform(x_train['comment'])
     x_test = vectorizer.transform(x_test['comment'])
+
+    
     model_lr, accuracy_lr, roc_auc_lr, tt_lr = run_model(model_lr, x_train, y_train, x_test, y_test)
     return model_lr, accuracy_lr, roc_auc_lr, tt_lr
 
-logit_tfidf("data/cleaned_comments.csv")
+#logit_tfidf("data/cleaned_comments.csv")
 # Scalar features logit
 ### Normalize Features
 from sklearn.preprocessing import StandardScaler
@@ -75,7 +77,7 @@ def normalize_scalar(x_train, x_test):
     scaler = StandardScaler()
     x_train.loc[:, scalar_features] = scaler.fit_transform(x_train[scalar_features])
     x_test.loc[:, scalar_features] = scaler.fit_transform(x_test[scalar_features])
-    return x_train, x_test
+    return x_train.loc[:, scalar_features], x_test.loc[:, scalar_features]
 
 def logit_scalar(csv):
     # Split data
@@ -93,12 +95,44 @@ def logit_scalar(csv):
     return model_lr, accuracy_lr, roc_auc_lr, tt_lr
 
 # tf-idf combined
-# x_train2 = x_train.copy()
-# x_test2 = x_test.copy()
-# tf_idf_matrix = pd.DataFrame(
-#     vectorizer.fit_transform(x_train['comment']).toarray(), 
-#     columns=vectorizer.get_feature_names())
-# x_train2 = pd.concat([x_train2.loc[:, scalar_features], tf_idf_matrix])
+
+def logit_combined(csv):
+    # split data and remove stopwords
+    df = pd.read_csv(csv)
+    X = df.loc[:, df.columns != "label"]
+    x_train, x_test, y_train, y_test = train_test_split(X, df['label'], random_state=42)
+    x_train.comment = x_train.comment.apply(lambda x: removeStopWords(x))
+        
+    # Model - standard
+    params_lr = {'penalty': 'elasticnet', 'l1_ratio':0.5, 'solver': 'saga'}
+    model_lr = LogisticRegression(**params_lr)
+        
+    # Tf-idf (fit on x_train)
+    vectorizer = TfidfVectorizer(use_idf=True, ngram_range=(1,3), min_df=0.008, max_df=0.8)
+    vectorizer.fit(x_train['comment'])
+    
+    tf_idf_train = pd.DataFrame(vectorizer.transform(x_train['comment']).toarray(), 
+            columns=vectorizer.get_feature_names())
+    tf_idf_test = pd.DataFrame(vectorizer.transform(x_test['comment']).toarray(), 
+            columns=vectorizer.get_feature_names())
+    
+    x_train.reset_index(drop=True, inplace=True)
+    x_test.reset_index(drop=True, inplace=True)
+    
+    scalar_features = ['score', 'ups', 'downs']
+    train = pd.concat([x_train.loc[:, scalar_features], tf_idf_train], axis=1)
+    test = pd.concat([x_test.loc[:, scalar_features], tf_idf_test], axis=1)
+    
+        
+    model_lr, accuracy_lr, roc_auc_lr, tt_lr = run_model(model_lr, train, y_train, test, y_test)
+
+
+print("COMBINEd")
+logit_tfidf("data/cleaned_comments.csv")
+print("SCALAR")
+logit_scalar("data/cleaned_comments.csv")
+print("TF_IDF")
+logit_combined("data/cleaned_comments.csv")
 
 
 #Count vectorizer for bag of words
