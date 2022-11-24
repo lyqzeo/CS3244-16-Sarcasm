@@ -13,6 +13,8 @@ import json
 
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.metrics import f1_score
 
 
 # Code inspired by: https://towardsdatascience.com/super-easy-way-to-get-sentence-embedding-using-fasttext-in-python-a70f34ac5b7c
@@ -107,19 +109,29 @@ def cnn(csv):
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     #TODO: experiment with hyperparameters
-    clf = MLPClassifier(solver='adam', alpha=1e-5,
-                        hidden_layer_sizes=(30, 5), random_state=1, verbose=True)
-    print("Logging hyper-parameters")
-    print("Solver:", clf.__dict__["solver"])
-    print("Alpha:", clf.__dict__["alpha"])
-    print("Hidden layer sizes", clf.__dict__["hidden_layer_sizes"])
-    print("")
+    clf = None
+    multi_layer = True
+    if multi_layer:
+        clf = MLPClassifier(solver='adam', alpha=1e-5, 
+                            hidden_layer_sizes=(30,5), early_stopping=True,
+                            random_state=1, verbose=True)
+        print("Logging hyper-parameters")
+        print("Solver:", clf.__dict__["solver"])
+        print("Alpha:", clf.__dict__["alpha"])
+        print("Hidden layer sizes", clf.__dict__["hidden_layer_sizes"])
+        print("Early stopping:", clf.__dict__["early_stopping"])
+        print("")
+    else:
+        clf = Perceptron(random_state=1, verbose=True)
+        print("Using single layer perceptron")
+        print("")
 
     print("Begin training...")
     clf = clf.fit(X_train, y_train)
 
     print("training set score: %f" % clf.score(X_train, y_train))
     print("test set score: %f" % clf.score(X_test, y_test))
+    print("test f1 score:", f1_score(y_test, clf.predict(X_test), average='binary'))
 
 def main(args):
     assert args.csv, "Please specify --csv"
