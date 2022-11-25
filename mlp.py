@@ -1,7 +1,3 @@
-# Possible guide: https://medium.com/dair-ai/deep-learning-for-nlp-an-overview-of-recent-trends-d0d8f40a776d
-# Note: Might change from cnn to regular nn for ease of implementation
-#       But might use cnn anyway for potentially powerful model
-
 import os, time
 
 import argparse
@@ -41,9 +37,9 @@ def extractVaderList(str):
     return list(vader_dict[k] for k in ('neg', 'neu', 'pos', 'compound'))
 
 def get_X_y(csv):
-    if os.path.isfile("./data/cnn_cache.npz"):
+    if os.path.isfile("./data/mlp_cache.npz"):
         print("Reading from cached X,y")
-        arr = np.load("data/cnn_cache.npz")
+        arr = np.load("data/mlp_cache.npz")
         return arr["X"], arr["y"]
     
     print("No cached X,y found, computing from source")
@@ -98,11 +94,11 @@ def get_X_y(csv):
     X = pd.concat(X_input, axis=1).to_numpy()
     y = df["label"].to_numpy()
 
-    np.savez("data/cnn_cache", X=X, y=y)
+    np.savez("data/mlp_cache", X=X, y=y)
     
     return X,y
 
-def cnn(csv):
+def mlp(csv):
     X,y = get_X_y(csv)
     print("Data shape: ", X.shape,)
     print("Loading complete, setting up...")
@@ -135,14 +131,14 @@ def cnn(csv):
 
 def main(args):
     assert args.csv, "Please specify --csv"
-    cnn(args.csv)
+    mlp(args.csv)
 
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv', help='path to the dataset file')
     return parser.parse_args()
 
-# Usage: python cnn.py --csv data/cleaned_comments_full.csv
+# Usage: python mlp.py --csv data/cleaned_comments_full.csv
 if __name__ == "__main__":
     start_time = time.time()
     args = get_arguments()
