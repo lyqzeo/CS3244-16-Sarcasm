@@ -52,8 +52,7 @@ def logit_tfidf(csv):
     x_train.comment = x_train.comment.apply(lambda x: removeStopWords(x))
     
     # Model - standard
-    #params_lr = {'penalty': 'elasticnet', 'l1_ratio':0.5, 'solver': 'saga'}
-    params_lr = {'solver': 'liblinear'}
+    params_lr = {'penalty': 'elasticnet', 'l1_ratio':0.5, 'solver': 'saga'}
     model_lr = LogisticRegression(**params_lr)
     
     # Tf-idf (fit on x_train)
