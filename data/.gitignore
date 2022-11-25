@@ -1,3 +1,3 @@
 train-balanced-sarcasm.csv
 cleaned_comments_full.csv
-cnn_cache.npz
+mlp_cache.npz
