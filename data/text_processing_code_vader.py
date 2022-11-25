@@ -48,33 +48,27 @@ def preprocess(input_path, output_file):
     df.replace("", nan_value, inplace=True)
     df.dropna(subset=["comment"], inplace=True)
 
-    analyzer = SentimentIntensityAnalyzer()
-    sentiments_comment = []
-    for sentence in df['comment']:
-        sentence = str(sentence)
-        vs = analyzer.polarity_scores(sentence)
-        sentiments_comment += [str(vs)]
-    sentiments_comment = np.reshape(np.array([sentiments_comment]),(-1,1))
-
-    sentiments_pcomment = []
-    for sentence in df['parent_comment']:
-        sentence = str(sentence)
-        vs = analyzer.polarity_scores(sentence)
-        sentiments_pcomment += [str(vs)]
-    sentiments_pcomment = np.reshape(np.array([sentiments_pcomment]),(-1,1))
-
-    df['vader_comment'] = sentiments_comment
-    df['vader_pcomment'] = sentiments_pcomment
     # cleaned_comments and cleaned_parent_comment not in df
     df.to_csv(output_file, index=False)
 
 def preprocess_cat(df, category):
+
+    analyzer = SentimentIntensityAnalyzer()
+    sentiments = []
+    for sentence in df[category]:
+        sentence = str(sentence)
+        vs = analyzer.polarity_scores(sentence)
+        sentiments += [str(vs)]
+    sentiments = np.reshape(np.array([sentiments]),(-1,1))
+    col_name = "vader_comment" if category == "comment" else "vader_pcomment"
+    df[col_name] = sentiments
+
     # lowercase all comments
     df[category] = df[category].str.lower()
 
     # remove urls
     pattern = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-    df[category] = np.vectorize(pattern.sub)('', df[category])
+    df[category] = df[category].transform(lambda x: pattern.sub('', x))
 
     emoji = re.compile("["
                 u"\U0001F600-\U0001FFFF"  # emoticons
@@ -84,19 +78,19 @@ def preprocess_cat(df, category):
                 u"\U00002702-\U000027B0"
                 u"\U000024C2-\U0001F251"
                 "]+", flags=re.UNICODE)
-    df[category] = np.vectorize(emoji.sub)(r'', df[category])
+    df[category] = df[category].transform(lambda x: emoji.sub(r'', x))
 
     # expand contractions ie. he's => he is
-    df[category] = np.vectorize(contractions.fix)(df[category])
+    df[category] = df[category].transform(contractions.fix)
 
     # remove [,.\"!@#$%^&*(){}?/;`~:<>+=-] from the comments
-    df[category] = np.vectorize(re.sub)(r"[,.\"!@#$%^&*(){}?/;`~:<>+=-]", "", df[category])
+    df[category] = df[category].transform(lambda x: re.sub(r"[,.\"!@#$%^&*(){}?/;`~:<>+=-]", "", x))
 
     stop_words = set(stopwords.words("english"))
     stop_words.discard("not")
 
     for i in df[category].index:
-        text = df.at[i, "comment"]
+        text = df.at[i, category]
 
         tokens = word_tokenize(text)
         table = str.maketrans('', '', string.punctuation)
@@ -105,7 +99,7 @@ def preprocess_cat(df, category):
 
         words = [w for w in words if not w in stop_words]
         words = ' '.join(words)
-        df.at[i, "comment"] = words
+        df.at[i, category] = words
 
 def main(args):
     assert args.input and args.output, "Please specify --input and --output"
