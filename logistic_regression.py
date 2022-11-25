@@ -1,14 +1,11 @@
 import pandas as pd
 import time
-import json
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, plot_confusion_matrix, plot_roc_curve
 
 from matplotlib import pyplot as plt 
-
-# Set up own cleaned_data_full
 
 def run_model(model, X_train, y_train, X_test, y_test, name, verbose=True):
     t0=time.time()
