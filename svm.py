@@ -29,8 +29,10 @@ def svmcv(csv): # best so far, cross validation
 
     # all columns except "labels" column
     X = df.loc[:, df.columns != "label"]
-    x_comment = X.comment
-    x_comment = X.comment.astype(str)
+    x = X.comment.astype(str)
+    y = df.label
+
+    X_train, X_test, y_train, y_test = train_test_split(x, y)
 
     y = df["label"]
 
@@ -65,13 +67,16 @@ def svmcv(csv): # best so far, cross validation
 
 
     grid_svm = GridSearchCV(pipeline, param_grid, scoring="accuracy", cv=3, n_jobs=-1)
-    grid_svm.fit(x_comment, y)
+    grid_svm.fit(X_train, y_train)
 
     print("tfidf + gridsearch")
     print(grid_svm.best_score_)
     for param_name in sorted(param_grid.keys()):
         print("%s: %r" % (param_name, grid_svm.best_params_[param_name]))
     
+    y_pred = grid_svm.predict(X_test)
+    print(classification_report(y_test, y_pred))
+
 
 
 def svmtfidf(csv):    #Countvect + tfidf + svm
@@ -119,14 +124,6 @@ def svmvader(csv): # using vader
     print("vader + default")
     print(classification_report(y_pred, y_test))
 
-## Accuracy 
-# Compound = 0.50-0.51
-# Pos = 0.47
-# Neg = 0.54
-# Neu = 0.48
-# Pos-Neg = 0.49
-# Pos+Neg = 0.55
-
 
 def svmlda(csv): ## Using lda
     
@@ -145,9 +142,6 @@ def svmlda(csv): ## Using lda
     count_X_test = count_vect.transform(X_test)
     vec_X_test = vect.transform(count_X_test).todense()
 
-    #pca = PCA(n_components = 500)
-    #pca_xtrain = pca.fit_transform(c) ## fits and transforms
-    #pca_xtest = pca.transform(vec_X_test) ## transforms maps fitted para 
     
     lda = LDA(n_components = 1)
     X_train_lda = lda.fit_transform(vect_X_train, y_train)
@@ -162,13 +156,15 @@ def svmlda(csv): ## Using lda
     print("tfidf + lda + default svm")
     print(classification_report(y_pred, y_test))
 
-def svm(csv): #tfidf + lda + gridsvm
+def svmldags(csv): #tfidf + lda + gridsvm
     df = pd.read_csv(csv)
 
     # all columns except "labels" column
     X = df.loc[:, df.columns != "label"]
-    x_comment = X.comment
-    x_comment = X.comment.astype(str)
+    x = X.comment.astype(str)
+    y = df.label
+
+    X_train, X_test, y_train, y_test = train_test_split(x, y)
 
     y = df["label"]
 
@@ -192,13 +188,18 @@ def svm(csv): #tfidf + lda + gridsvm
     }   
 
     grid_svm = GridSearchCV(pipeline, param_grid, scoring="accuracy", cv=3, n_jobs=-1)
-    grid_svm.fit(x_comment, y)
+    grid_svm.fit(X_train, y_train)
 
     print("tfidf + lda + gridsearch")
     print(grid_svm.best_score_)
     for param_name in sorted(param_grid.keys()):
         print("%s: %r" % (param_name, grid_svm.best_params_[param_name]))
+    
+    y_pred = grid_svm.predict(X_test)
+    print(classification_report(y_test, y_pred))
 
+
+## Word2Vec
 def svmwrd(csv):
 
     df = pd.read_csv(csv)
