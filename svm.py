@@ -24,7 +24,7 @@ from scipy.sparse import csr_matrix
 from mlxtend.preprocessing import DenseTransformer
 
 
-def svmcv(csv): # best so far, cross validation
+def svm(csv): # best so far, cross validation
     df = pd.read_csv(csv)
 
     # all columns except "labels" column
@@ -162,7 +162,7 @@ def svmlda(csv): ## Using lda
     print("tfidf + lda + default svm")
     print(classification_report(y_pred, y_test))
 
-def svm(csv): #tfidf + lda + gridsvm
+def svmd(csv): #tfidf + lda + gridsvm
     df = pd.read_csv(csv)
 
     # all columns except "labels" column
