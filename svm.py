@@ -1,28 +1,17 @@
 import argparse
-#from tkinter.ttk import _TreeviewTagDict
-
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 
-import gensim
-from gensim.models import Word2Vec
-
-from sklearn import metrics
 from sklearn import svm
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC, SVC
-from sklearn.decomposition import PCA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from scipy.sparse import csr_matrix
-from mlxtend.preprocessing import DenseTransformer
+from sklearn.svm import LinearSVC
 
+from mlxtend.preprocessing import DenseTransformer
 
 def svm(csv): # best so far, cross validation
     df = pd.read_csv(csv)
@@ -46,25 +35,13 @@ def svm(csv): # best so far, cross validation
         ('vect', vect),
         ('tftrans', tf_trans),
         ('model', svm_model)
-    ])
-    
-    # param_grid = {
-    #     'vect__ngram_range': [(1, 1), (1, 2), (1, 3)],
-    #     'vect__max_features': (5000, 15000, 30000),
-    #     'model__l1_ratio': (0.0, 0.15, 0.40, 0.60, 0.85, 1.0)
-    # }   
-    # param_grid = {
-    #     'vect__ngram_range': [(1, 1), (1, 2), (1, 3), (1,4)],
-    #     'vect__max_features': (5000, 15000, 30000),
-    #     'model__l1_ratio': (0.0, 0.15, 0.40, 0.60, 0.85, 1.0)
-    # }   
+    ])  
 
     param_grid = {
         'vect__ngram_range': [(1, 1), (1, 2), (1, 3),(1,4), (1,5), (1,6), (1,7), (1,8), (1,9)],
         'vect__max_features': (5000, 10000, 15000, 20000, 30000),
         'model__l1_ratio': (0.0, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1,0)
     }   
-
 
     grid_svm = GridSearchCV(pipeline, param_grid, scoring="accuracy", cv=3, n_jobs=-1)
     grid_svm.fit(X_train, y_train)
@@ -76,8 +53,6 @@ def svm(csv): # best so far, cross validation
     
     y_pred = grid_svm.predict(X_test)
     print(classification_report(y_test, y_pred))
-
-
 
 def svmtfidf(csv):    #Countvect + tfidf + svm
     df = pd.read_csv(csv)
@@ -146,7 +121,6 @@ def svmlda(csv): ## Using lda
     lda = LDA(n_components = 1)
     X_train_lda = lda.fit_transform(vect_X_train, y_train)
     X_test_lda = lda.transform(vec_X_test)
-
 
     svc = LinearSVC(penalty='l1', C=0.55, fit_intercept=False, dual=False, tol=1e-10, max_iter=100000)
 
@@ -244,9 +218,6 @@ def svmwrd(csv):
 
     print("word2vec + default")
     print(classification_report(y_pred, y_test))
-
-
-    
 
 def main(args):
     assert args.csv, "Please specify --csv"
